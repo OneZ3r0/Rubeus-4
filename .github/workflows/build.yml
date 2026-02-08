@@ -23,11 +23,23 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Install .NET Framework v4.0 reference assemblies
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          nuget install Microsoft.NETFramework.ReferenceAssemblies.net40 -Version 1.0.3 -OutputDirectory packages
+
+          $refPath = Resolve-Path "packages/Microsoft.NETFramework.ReferenceAssemblies.net40.1.0.3/build/.NETFramework/v4.0"
+          "FRAMEWORK_PATH_OVERRIDE=$refPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Build
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          msbuild .\Rubeus.sln /m /p:Configuration=Release /p:Platform="Any CPU"
+          msbuild .\Rubeus.sln /m /p:Configuration=Release /p:Platform="Any CPU" /p:FrameworkPathOverride="$env:FRAMEWORK_PATH_OVERRIDE"
 
       - name: Package
         shell: pwsh
