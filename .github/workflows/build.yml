@@ -41,18 +41,18 @@ jobs:
           $ErrorActionPreference = 'Stop'
           msbuild .\Rubeus.sln /m /p:Configuration=Release /p:Platform="Any CPU" /p:FrameworkPathOverride="$env:FRAMEWORK_PATH_OVERRIDE"
 
-      - name: Package
+      - name: Stage artifacts
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Compress-Archive -Path .\Rubeus\bin\Release\* -DestinationPath .\dist\Rubeus-Release.zip -Force
+          Copy-Item -Path .\Rubeus\bin\Release\* -Destination dist -Recurse -Force
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Rubeus-Release
-          path: dist/Rubeus-Release.zip
+          path: dist/**
           if-no-files-found: error
 
   release:
@@ -70,7 +70,12 @@ jobs:
           name: Rubeus-Release
           path: dist
 
+      - name: Package
+        run: |
+          cd dist
+          zip -r ../Rubeus-Release.zip .
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/Rubeus-Release.zip
+          files: Rubeus-Release.zip
